@@ -1,0 +1,3 @@
+#!/bin/bash
+
+docker run -d --rm -v "/home/ubuntu/storage:/home/jovyan/work" -p 80:8888 jupyter/scipy-notebook start-notebook.sh --NotebookApp.token=${password}

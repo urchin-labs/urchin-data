@@ -1,33 +1,40 @@
-variable "access_key" {}
-variable "secret_key" {}
-variable "region" {}
-
-variable "specs" { type = "map"}
-
-// provider declaration
 provider "aws" {
-  access_key = "${var.access_key}"
-  secret_key = "${var.secret_key}"
-  region     = "${var.region}"
+  region  = "${var.region}"
+  profile = "${var.profile}"
 }
 
-// fetch an AMI for ubuntu in the selected region
-data "aws_ami" "ubuntu" {
+data "aws_ami" "base_image" {
   most_recent = true
+  owners      = ["681990645369"]
 
   filter {
-    name   = "name"
-    values = ["ubuntu/images/hvm-ssd/ubuntu-xenial-16.04-amd64-server-*"]
-    values = ["paravirtual"]
+    name   = "tag:Application"
+    values = ["Jupyter"]
   }
 
-  owners = ["099720109477"]
+  filter {
+    name   = "tag:Manufacturer"
+    values = ["Urchin"]
+  }
+}
+
+data "template_file" "user_data" {
+  template = "${file("${path.module}/config/user_data.txt")}"
+
+  vars {
+    password = "${var.password}"
+  }
+}
+
+resource "aws_key_pair" "site_key" {
+  public_key = "${file("~/.ssh/id_rsa.pub")}"
+  key_name   = "urchin_default_key"
 }
 
 // create a default security group
 resource "aws_security_group" "allow_all" {
-  name        = "allow_all"
-  description = "Allow all inbound traffic"
+  name        = "urchin_allow_all"
+  description = "Allow all inbound traffic to your Urchin instance"
 
   ingress {
     from_port   = 0
@@ -44,13 +51,13 @@ resource "aws_security_group" "allow_all" {
   }
 
   tags {
-    Name = "allow_all"
+    Name = "urchin_allow_all"
   }
 }
 
 // Build the instance and launch Ansible to configure it
-resource "aws_instance" "generic_node" {
-  ami           = "${data.aws_ami.ubuntu.id}"
+resource "aws_instance" "urchin_node" {
+  ami           = "${data.aws_ami.base_image.id}"
   instance_type = "${var.specs["type"]}"
 
   tags {
@@ -58,14 +65,7 @@ resource "aws_instance" "generic_node" {
   }
 
   security_groups = ["${aws_security_group.allow_all.name}"]
-  key_name        = "${var.specs["key_name"]}"
+  key_name        = "${aws_key_pair.site_key.key_name}"
 
-  provisioner "local-exec" {
-    command = "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook --private-key ~/.ssh/${var.specs["key_name"]}.pem -i '${aws_instance.generic_node.public_ip},' config/main.yml"
-  }
-}
-
-// output instance public IP
-output "public_ip" {
-  value = "${aws_instance.generic_node.public_ip}"
+  user_data = "${data.template_file.user_data.rendered}"
 }
