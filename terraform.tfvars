@@ -6,4 +6,3 @@ specs = {
   "name" = "mynode"
 }
 
-password = "changeme"
