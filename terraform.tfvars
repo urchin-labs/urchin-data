@@ -3,6 +3,6 @@ profile = "default"
 
 specs = {
   "type" = "t2.medium",
-  "name" = "mynode"
+  "name" = "urchin_jupyter"
 }
 

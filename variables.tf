@@ -12,5 +12,5 @@ variable "specs" {
 }
 
 variable "password" {
-  description = "User defined password for SciPy"
+  description = "User defined password for Jupyter"
 }
