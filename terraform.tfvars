@@ -4,6 +4,6 @@ password = "changeme"
 
 specs = {
   "type" = "t2.medium",
-  "name" = "urchin_jupyter"
+  "name" = "Urchin Labs"
 }
 

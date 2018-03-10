@@ -148,7 +148,6 @@ resource "aws_instance" "urchin_node" {
   //  user_data = "${data.template_file.user_data.rendered}"
   provisioner "remote-exec" {
     inline = [
-      "sudo apt-get install -y nfs-common",
       "mkdir storage",
       "sudo mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2 ${aws_efs_mount_target.mount.dns_name}:/ /home/ubuntu/storage",
       "docker run -d --rm -v '/home/ubuntu/storage:/home/jovyan/work' -p 80:8888 jupyter/scipy-notebook start-notebook.sh --NotebookApp.token=${var.password}",
